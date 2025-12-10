@@ -33,6 +33,8 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
             position: relative;
+            transition: border 0.3s;
+            border: 2px solid transparent;
         }
 
         h1 {
@@ -56,11 +58,14 @@
             margin-top: 5px;
         }
 
+        /* GRID PRINCIPAL */
         .grid-vals {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin: 20px 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
         }
 
         .big-val {
@@ -82,6 +87,21 @@
             color: #2ed573;
         }
 
+        /* MÁXIMAS E MÍNIMAS */
+        .min-max-box {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.9em;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .mm-val {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* IA CARD */
         .ai-card {
             border-left: 4px solid #00ff88;
             background: #252a38;
@@ -102,6 +122,29 @@
             display: block;
         }
 
+        /* SLIDER DE ALERTA */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ff4757;
+        }
+
+        .limit-val {
+            font-weight: bold;
+            color: #ff4757;
+            font-size: 1.2em;
+            min-width: 50px;
+        }
+
+        /* BOTÃO POWER */
         .btn-main {
             background: #3742fa;
             color: white;
@@ -113,6 +156,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
+            margin-top: 15px;
         }
 
         .btn-main.active {
@@ -140,17 +184,49 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 5px 10px;
+            padding: 6px 12px;
             cursor: pointer;
             border-radius: 4px;
-            font-size: 0.8em;
+            font-size: 0.85em;
             transition: 0.2s;
+            white-space: nowrap;
         }
 
         .icon-btn:hover {
             background: rgba(255, 255, 255, 0.3);
         }
 
+        /* RESPONSIVIDADE (CELULAR) */
+        @media (max-width: 600px) {
+            .big-val {
+                font-size: 2.2rem;
+            }
+
+            .container {
+                padding: 5px;
+            }
+
+            /* Botões do gráfico saem de cima e vão para uma barra própria */
+            .top-btn-group {
+                position: static;
+                display: flex;
+                justify-content: center;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+
+            .icon-btn {
+                flex: 1;
+                text-align: center;
+            }
+
+            /* Botões ocupam largura total */
+            .chart-box {
+                height: 300px;
+            }
+        }
+
+        /* FULLSCREEN MODE */
         .fullscreen-mode {
             position: fixed !important;
             top: 0;
@@ -162,15 +238,19 @@
             margin: 0;
             padding: 10px;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
 
         .fullscreen-mode .chart-box {
-            height: 90vh;
+            flex: 1;
+            height: auto;
         }
 
         .fullscreen-mode .top-btn-group {
-            top: 20px;
-            right: 20px;
+            position: static;
+            justify-content: flex-end;
+            margin-bottom: 10px;
         }
 
         .fs-close {
@@ -183,13 +263,33 @@
         .fullscreen-mode .fs-close {
             display: block;
         }
+
+        /* Classe de Alerta Visual (Piscar Borda) */
+        .alert-mode {
+            border: 2px solid #ff4757;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 71, 87, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
+            }
+        }
     </style>
 </head>
 
 <body>
 
     <div class="container">
-        <div class="card">
+        <div class="card" id="main-card">
             <h1>Projeto Climax</h1>
             <div class="clock" id="digital-clock">--:--:--</div>
             <div class="sub-info">
@@ -200,10 +300,27 @@
                 <div>
                     <div class="big-val c-temp" id="val-temp">--</div>
                     <div class="lbl">Temperatura °C</div>
+                    <div class="min-max-box">
+                        <span>Min: <span id="min-t" class="mm-val">--</span></span>
+                        <span>Max: <span id="max-t" class="mm-val">--</span></span>
+                    </div>
                 </div>
                 <div>
                     <div class="big-val c-hum" id="val-hum">--</div>
                     <div class="lbl">Umidade %</div>
+                    <div class="min-max-box">
+                        <span>Min: <span id="min-h" class="mm-val">--</span></span>
+                        <span>Max: <span id="max-h" class="mm-val">--</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-top: 15px;">
+                <label class="lbl" style="font-size: 0.7em;">Definir Alerta de Temperatura (°C)</label>
+                <div class="slider-container">
+                    <input type="range" id="alert-slider" min="20" max="40" step="0.5" value="30"
+                        oninput="updateLimit(this.value)">
+                    <span id="limit-disp" class="limit-val">30.0</span>
                 </div>
             </div>
 
@@ -219,7 +336,7 @@
             <div class="top-btn-group">
                 <button class="icon-btn" onclick="exportToCSV()">📥 Baixar CSV</button>
                 <button class="icon-btn" onclick="openFullscreen()">⛶ Tela Cheia</button>
-                <button class="icon-btn fs-close" onclick="closeFullscreen()">X</button>
+                <button class="icon-btn fs-close" onclick="closeFullscreen()">X SAIR</button>
             </div>
 
             <div class="chart-box">
@@ -238,20 +355,46 @@
         let lastHeartbeat = Date.now();
         let isPowerOn = false;
 
+        // Variáveis de Recordes e Limite
+        let maxT = -100, minT = 100;
+        let maxH = -100, minH = 100;
+        let tempLimite = 30.0; // Valor padrão do slider
+        let currentTemp = 0;   // Guarda temperatura atual para verificar alerta
+
         // Relógio
         setInterval(() => {
             const now = new Date();
             document.getElementById('digital-clock').innerText = now.toLocaleTimeString();
         }, 1000);
 
+        // --- LÓGICA DO SLIDER ---
+        function updateLimit(val) {
+            tempLimite = parseFloat(val);
+            document.getElementById('limit-disp').innerText = tempLimite.toFixed(1);
+            checkVisualAlert(); // Verifica imediatamente ao mover
+        }
+
+        // Verifica se deve ficar vermelho (Baseado no Slider OU na msg da IA)
+        function checkVisualAlert(aiAlert = false) {
+            const mainCard = document.getElementById('main-card');
+            const aiCard = document.querySelector('.ai-card');
+
+            // Fica vermelho se: Temp atual > Limite do Slider OU IA mandou ALERTA
+            if (currentTemp > tempLimite || aiAlert) {
+                mainCard.classList.add('alert-mode');
+                aiCard.style.borderLeftColor = "#ff4757";
+                if (navigator.vibrate) navigator.vibrate(200); // Vibra
+            } else {
+                mainCard.classList.remove('alert-mode');
+                aiCard.style.borderLeftColor = "#00ff88";
+            }
+        }
+
         // --- GRÁFICO ---
         const ctx = document.getElementById('myChart').getContext('2d');
-
-        // Lógica para mostrar só a bolinha do último ponto
         const radiusLogic = (ctx) => {
             const index = ctx.dataIndex;
             const count = ctx.dataset.data.length;
-            // Se for o último, tamanho 6. Se for antigo, tamanho 0 (invisivel)
             return index === count - 1 ? 6 : 0;
         };
 
@@ -260,45 +403,15 @@
             data: {
                 labels: [],
                 datasets: [
-                    {
-                        label: 'Temp', borderColor: '#ff4757', backgroundColor: 'rgba(255, 71, 87, 0.1)',
-                        data: [], fill: true, tension: 0.3,
-                        pointRadius: radiusLogic,
-                        pointHoverRadius: 8, // Ao passar o mouse, a bolinha cresce e aparece
-                        pointHitRadius: 20   // Área de detecção grande para facilitar passar o mouse
-                    },
-                    {
-                        label: 'Umid', borderColor: '#2ed573', backgroundColor: 'rgba(46, 213, 115, 0.1)',
-                        data: [], fill: true, tension: 0.3,
-                        pointRadius: radiusLogic,
-                        pointHoverRadius: 8,
-                        pointHitRadius: 20
-                    }
+                    { label: 'Temp', borderColor: '#ff4757', backgroundColor: 'rgba(255, 71, 87, 0.1)', data: [], fill: true, tension: 0.3, pointRadius: radiusLogic, pointHoverRadius: 8, pointHitRadius: 20 },
+                    { label: 'Umid', borderColor: '#2ed573', backgroundColor: 'rgba(46, 213, 115, 0.1)', data: [], fill: true, tension: 0.3, pointRadius: radiusLogic, pointHoverRadius: 8, pointHitRadius: 20 }
                 ]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                interaction: {
-                    mode: 'index',      // Mostra temp e umid juntos ao passar o mouse
-                    intersect: false    // Não precisa acertar a linha exata, só estar na direção
-                },
-                scales: {
-                    x: { ticks: { maxTicksLimit: 6, color: '#666' }, grid: { display: false } },
-                    y: { grid: { color: '#333' } }
-                },
-                plugins: {
-                    zoom: {
-                        zoom: { wheel: { enabled: true, modifierKey: 'ctrl' }, pinch: { enabled: true }, mode: 'x' },
-                        pan: { enabled: true, mode: 'x' }
-                    },
-                    tooltip: {
-                        enabled: true,
-                        mode: 'index',
-                        intersect: false
-                    }
-                }
+                responsive: true, maintainAspectRatio: false, animation: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: { x: { ticks: { maxTicksLimit: 6, color: '#666' }, grid: { display: false } }, y: { grid: { color: '#333' } } },
+                plugins: { zoom: { zoom: { wheel: { enabled: true, modifierKey: 'ctrl' }, pinch: { enabled: true }, mode: 'x' }, pan: { enabled: true, mode: 'x' } } }
             }
         });
 
@@ -306,117 +419,107 @@
         client.on('connect', () => {
             document.getElementById('sys-status').innerText = "🟢 Sistema Online";
             document.getElementById('sys-status').style.color = "#00e676";
-
             client.subscribe('climax/esp32/#');
             client.subscribe('climax/ia/mensagem');
             client.subscribe('climax/web/resposta');
             client.subscribe('climax/web/pontografico');
             client.subscribe('climax/node/status');
-
             client.publish('climax/web/requisicao', 'get');
         });
 
         client.on('message', (topic, message) => {
             const msg = message.toString();
 
-            if (topic.includes('temperatura')) document.getElementById('val-temp').innerText = parseFloat(msg).toFixed(1);
-            if (topic.includes('umidade')) document.getElementById('val-hum').innerText = parseFloat(msg).toFixed(0);
-            if (topic.includes('rssi')) document.getElementById('rssi').innerText = msg;
+            // TEMPERATURA
+            if (topic.includes('temperatura')) {
+                let val = parseFloat(msg);
+                currentTemp = val;
+                document.getElementById('val-temp').innerText = val.toFixed(1);
 
-            // Atualização a cada 30s
-            if (topic.includes('pontografico')) {
-                const dado = JSON.parse(msg);
-                addPointToChart(dado);
+                // Lógica de Recordes
+                if (val > maxT) { maxT = val; document.getElementById('max-t').innerText = val.toFixed(1); }
+                if (val < minT) { minT = val; document.getElementById('min-t').innerText = val.toFixed(1); }
+
+                checkVisualAlert(); // Verifica alerta a cada nova leitura
             }
 
+            // UMIDADE
+            if (topic.includes('umidade')) {
+                let val = parseFloat(msg);
+                document.getElementById('val-hum').innerText = val.toFixed(0);
+                if (val > maxH) { maxH = val; document.getElementById('max-h').innerText = val.toFixed(0); }
+                if (val < minH) { minH = val; document.getElementById('min-h').innerText = val.toFixed(0); }
+            }
+
+            if (topic.includes('rssi')) document.getElementById('rssi').innerText = msg;
+            if (topic.includes('pontografico')) { addPointToChart(JSON.parse(msg)); }
             if (topic.includes('node/status')) lastHeartbeat = Date.now();
 
             if (topic.includes('ia/mensagem')) {
                 let clean = msg.replace("🟢 ONLINE | ", "").replace("🔴 SISTEMA OFFLINE", "ERRO CRÍTICO");
                 document.getElementById('ai-msg').innerText = clean;
-                const card = document.querySelector('.ai-card');
-
-                if (msg.includes("ALERTA") || msg.includes("OFFLINE")) {
-                    card.style.borderLeftColor = "#ff4757";
-                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                } else {
-                    card.style.borderLeftColor = "#00ff88";
-                }
+                // Passa True se a IA detectar alerta critico
+                checkVisualAlert(msg.includes("ALERTA") || msg.includes("OFFLINE"));
             }
 
-            if (topic.includes('web/resposta')) {
-                const dados = JSON.parse(msg);
-                loadHistoryChart(dados);
-            }
+            if (topic.includes('web/resposta')) { loadHistoryChart(JSON.parse(msg)); }
         });
 
-        // Formata hora com SEGUNDOS: 10:30:45
-        function formatTime(timestamp) {
-            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
+        function formatTime(timestamp) { return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
 
         function loadHistoryChart(dados) {
-            chart.data.labels = [];
-            chart.data.datasets[0].data = [];
-            chart.data.datasets[1].data = [];
+            chart.data.labels = []; chart.data.datasets[0].data = []; chart.data.datasets[1].data = [];
+
+            // Inicializa recordes com base no histórico recebido
+            if (dados.length > 0) {
+                // Reseta para pegar do histórico
+                maxT = -100; minT = 100; maxH = -100; minH = 100;
+            }
 
             dados.forEach(d => {
                 chart.data.labels.push(formatTime(d.time));
                 chart.data.datasets[0].data.push(d.temp);
                 chart.data.datasets[1].data.push(d.hum);
+
+                // Atualiza recordes com dados do histórico também
+                if (d.temp > maxT) maxT = d.temp; if (d.temp < minT) minT = d.temp;
+                if (d.hum > maxH) maxH = d.hum; if (d.hum < minH) minH = d.hum;
             });
 
-            chart.update();
-
-            // Zoom automático no final
-            if (chart.data.labels.length > 10) {
-                chart.pan({ x: -Number.MAX_SAFE_INTEGER }, undefined, 'default');
+            // Atualiza tela com recordes
+            if (maxT !== -100) {
+                document.getElementById('max-t').innerText = maxT.toFixed(1);
+                document.getElementById('min-t').innerText = minT.toFixed(1);
+                document.getElementById('max-h').innerText = maxH.toFixed(0);
+                document.getElementById('min-h').innerText = minH.toFixed(0);
             }
+
+            chart.update();
+            if (chart.data.labels.length > 10) chart.pan({ x: -Number.MAX_SAFE_INTEGER }, undefined, 'default');
         }
 
         function addPointToChart(d) {
             chart.data.labels.push(formatTime(d.time));
             chart.data.datasets[0].data.push(d.t);
             chart.data.datasets[1].data.push(d.h);
-
-            if (chart.data.labels.length > 2000) {
-                chart.data.labels.shift();
-                chart.data.datasets[0].data.shift();
-                chart.data.datasets[1].data.shift();
-            }
+            if (chart.data.labels.length > 2000) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); chart.data.datasets[1].data.shift(); }
             chart.update();
         }
 
-        // --- CSV EXPORT (Ordem: Mais Recente -> Mais Antigo) ---
         function exportToCSV() {
-            // Usa ; como separador (Padrão Excel BR)
-            // \uFEFF corrige acentuação
             let csvContent = "data:text/csv;charset=utf-8,\uFEFFHora;Temperatura;Umidade\n";
-
-            // Pega o total de dados
             const total = chart.data.labels.length;
-
-            // LOOP INVERTIDO: Começa do último (total - 1) e vai até o 0
             for (let i = total - 1; i >= 0; i--) {
                 let label = chart.data.labels[i];
-
-                // Troca ponto por vírgula nos decimais
                 let t = chart.data.datasets[0].data[i].toString().replace('.', ',');
                 let h = chart.data.datasets[1].data[i].toString().replace('.', ',');
-
-                let row = `${label};${t};${h}`;
-                csvContent += row + "\n";
+                csvContent += `${label};${t};${h}\n`;
             }
-
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-
-            // Gera nome do arquivo com a data/hora atual para não sobrescrever
             const now = new Date();
-            const nomeArquivo = `climax_${now.getHours()}h${now.getMinutes()}.csv`;
-
-            link.setAttribute("download", nomeArquivo);
+            link.setAttribute("download", `climax_${now.getHours()}h${now.getMinutes()}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -435,8 +538,6 @@
             client.publish('climax/comando', isPowerOn ? 'LIGAR' : 'DESLIGAR');
             btn.innerText = isPowerOn ? "DESLIGAR VENTILAÇÃO" : "LIGAR SISTEMA";
             if (isPowerOn) btn.classList.add('active'); else btn.classList.remove('active');
-
-            // Efeito de feedback visual imediato
             if (navigator.vibrate) navigator.vibrate(50);
         }
 

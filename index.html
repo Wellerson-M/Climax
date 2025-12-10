@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climax Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #0f111a;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: 50px;
+        }
+
+        .card {
+            background: #1c1f2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        h1 {
+            margin: 0;
+            color: #00ff88;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .clock {
+            font-size: 1.2rem;
+            font-family: 'Courier New', monospace;
+            color: #00d2ff;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .sub-info {
+            font-size: 0.85em;
+            color: #8b9bb4;
+            margin-top: 5px;
+        }
+
+        .grid-vals {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .big-val {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .lbl {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #666;
+        }
+
+        .c-temp {
+            color: #ff4757;
+        }
+
+        .c-hum {
+            color: #2ed573;
+        }
+
+        .ai-card {
+            border-left: 4px solid #00ff88;
+            background: #252a38;
+            text-align: left;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #dcdde1;
+            white-space: pre-line;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .ai-title {
+            font-weight: bold;
+            color: #8b9bb4;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .btn-main {
+            background: #3742fa;
+            color: white;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-main.active {
+            background: #ff4757;
+            box-shadow: 0 0 15px rgba(255, 71, 87, 0.5);
+        }
+
+        /* GRÁFICO E BOTÕES */
+        .chart-box {
+            height: 350px;
+            position: relative;
+            width: 100%;
+        }
+
+        .top-btn-group {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.8em;
+            transition: 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .fullscreen-mode {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: #0f111a;
+            z-index: 99999;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .fullscreen-mode .chart-box {
+            height: 90vh;
+        }
+
+        .fullscreen-mode .top-btn-group {
+            top: 20px;
+            right: 20px;
+        }
+
+        .fs-close {
+            display: none;
+            background: #ff4757;
+            border: none;
+            font-weight: bold;
+        }
+
+        .fullscreen-mode .fs-close {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="card">
+            <h1>Projeto Climax</h1>
+            <div class="clock" id="digital-clock">--:--:--</div>
+            <div class="sub-info">
+                <span id="sys-status">🔴 Conectando...</span> | WiFi: <span id="rssi">--</span>dBm
+            </div>
+
+            <div class="grid-vals">
+                <div>
+                    <div class="big-val c-temp" id="val-temp">--</div>
+                    <div class="lbl">Temperatura °C</div>
+                </div>
+                <div>
+                    <div class="big-val c-hum" id="val-hum">--</div>
+                    <div class="lbl">Umidade %</div>
+                </div>
+            </div>
+
+            <button id="btn-pwr" class="btn-main" onclick="togglePower()">LIGAR SISTEMA</button>
+        </div>
+
+        <div class="card ai-card">
+            <span class="ai-title">Analise IA:</span>
+            <div id="ai-msg">Aguardando dados...</div>
+        </div>
+
+        <div class="card" id="card-graph">
+            <div class="top-btn-group">
+                <button class="icon-btn" onclick="exportToCSV()">📥 Baixar CSV</button>
+                <button class="icon-btn" onclick="openFullscreen()">⛶ Tela Cheia</button>
+                <button class="icon-btn fs-close" onclick="closeFullscreen()">X</button>
+            </div>
+
+            <div class="chart-box">
+                <canvas id="myChart"></canvas>
+            </div>
+            <div style="font-size:0.75rem; color:#555; margin-top:5px;">
+                CTRL+Scroll: Zoom | Arraste: Mover Histórico
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const broker = 'wss://test.mosquitto.org:8081';
+        const client = mqtt.connect(broker);
+
+        let lastHeartbeat = Date.now();
+        let isPowerOn = false;
+
+        // Relógio
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('digital-clock').innerText = now.toLocaleTimeString();
+        }, 1000);
+
+        // --- GRÁFICO ---
+        const ctx = document.getElementById('myChart').getContext('2d');
+
+        // Lógica para mostrar só a bolinha do último ponto
+        const radiusLogic = (ctx) => {
+            const index = ctx.dataIndex;
+            const count = ctx.dataset.data.length;
+            // Se for o último, tamanho 6. Se for antigo, tamanho 0 (invisivel)
+            return index === count - 1 ? 6 : 0;
+        };
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Temp', borderColor: '#ff4757', backgroundColor: 'rgba(255, 71, 87, 0.1)',
+                        data: [], fill: true, tension: 0.3,
+                        pointRadius: radiusLogic,
+                        pointHoverRadius: 8, // Ao passar o mouse, a bolinha cresce e aparece
+                        pointHitRadius: 20   // Área de detecção grande para facilitar passar o mouse
+                    },
+                    {
+                        label: 'Umid', borderColor: '#2ed573', backgroundColor: 'rgba(46, 213, 115, 0.1)',
+                        data: [], fill: true, tension: 0.3,
+                        pointRadius: radiusLogic,
+                        pointHoverRadius: 8,
+                        pointHitRadius: 20
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: {
+                    mode: 'index',      // Mostra temp e umid juntos ao passar o mouse
+                    intersect: false    // Não precisa acertar a linha exata, só estar na direção
+                },
+                scales: {
+                    x: { ticks: { maxTicksLimit: 6, color: '#666' }, grid: { display: false } },
+                    y: { grid: { color: '#333' } }
+                },
+                plugins: {
+                    zoom: {
+                        zoom: { wheel: { enabled: true, modifierKey: 'ctrl' }, pinch: { enabled: true }, mode: 'x' },
+                        pan: { enabled: true, mode: 'x' }
+                    },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+
+        // --- MQTT ---
+        client.on('connect', () => {
+            document.getElementById('sys-status').innerText = "🟢 Sistema Online";
+            document.getElementById('sys-status').style.color = "#00e676";
+
+            client.subscribe('climax/esp32/#');
+            client.subscribe('climax/ia/mensagem');
+            client.subscribe('climax/web/resposta');
+            client.subscribe('climax/web/pontografico');
+            client.subscribe('climax/node/status');
+
+            client.publish('climax/web/requisicao', 'get');
+        });
+
+        client.on('message', (topic, message) => {
+            const msg = message.toString();
+
+            if (topic.includes('temperatura')) document.getElementById('val-temp').innerText = parseFloat(msg).toFixed(1);
+            if (topic.includes('umidade')) document.getElementById('val-hum').innerText = parseFloat(msg).toFixed(0);
+            if (topic.includes('rssi')) document.getElementById('rssi').innerText = msg;
+
+            // Atualização a cada 30s
+            if (topic.includes('pontografico')) {
+                const dado = JSON.parse(msg);
+                addPointToChart(dado);
+            }
+
+            if (topic.includes('node/status')) lastHeartbeat = Date.now();
+
+            if (topic.includes('ia/mensagem')) {
+                let clean = msg.replace("🟢 ONLINE | ", "").replace("🔴 SISTEMA OFFLINE", "ERRO CRÍTICO");
+                document.getElementById('ai-msg').innerText = clean;
+                const card = document.querySelector('.ai-card');
+
+                if (msg.includes("ALERTA") || msg.includes("OFFLINE")) {
+                    card.style.borderLeftColor = "#ff4757";
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                } else {
+                    card.style.borderLeftColor = "#00ff88";
+                }
+            }
+
+            if (topic.includes('web/resposta')) {
+                const dados = JSON.parse(msg);
+                loadHistoryChart(dados);
+            }
+        });
+
+        // Formata hora com SEGUNDOS: 10:30:45
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function loadHistoryChart(dados) {
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.data.datasets[1].data = [];
+
+            dados.forEach(d => {
+                chart.data.labels.push(formatTime(d.time));
+                chart.data.datasets[0].data.push(d.temp);
+                chart.data.datasets[1].data.push(d.hum);
+            });
+
+            chart.update();
+
+            // Zoom automático no final
+            if (chart.data.labels.length > 10) {
+                chart.pan({ x: -Number.MAX_SAFE_INTEGER }, undefined, 'default');
+            }
+        }
+
+        function addPointToChart(d) {
+            chart.data.labels.push(formatTime(d.time));
+            chart.data.datasets[0].data.push(d.t);
+            chart.data.datasets[1].data.push(d.h);
+
+            if (chart.data.labels.length > 2000) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+                chart.data.datasets[1].data.shift();
+            }
+            chart.update();
+        }
+
+        // --- CSV EXPORT (Ordem: Mais Recente -> Mais Antigo) ---
+        function exportToCSV() {
+            // Usa ; como separador (Padrão Excel BR)
+            // \uFEFF corrige acentuação
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFFHora;Temperatura;Umidade\n";
+
+            // Pega o total de dados
+            const total = chart.data.labels.length;
+
+            // LOOP INVERTIDO: Começa do último (total - 1) e vai até o 0
+            for (let i = total - 1; i >= 0; i--) {
+                let label = chart.data.labels[i];
+
+                // Troca ponto por vírgula nos decimais
+                let t = chart.data.datasets[0].data[i].toString().replace('.', ',');
+                let h = chart.data.datasets[1].data[i].toString().replace('.', ',');
+
+                let row = `${label};${t};${h}`;
+                csvContent += row + "\n";
+            }
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+
+            // Gera nome do arquivo com a data/hora atual para não sobrescrever
+            const now = new Date();
+            const nomeArquivo = `climax_${now.getHours()}h${now.getMinutes()}.csv`;
+
+            link.setAttribute("download", nomeArquivo);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        setInterval(() => {
+            if (Date.now() - lastHeartbeat > 10000) {
+                document.getElementById('sys-status').innerText = "⚠️ Servidor OFF";
+                document.getElementById('sys-status').style.color = "orange";
+            }
+        }, 5000);
+
+        function togglePower() {
+            isPowerOn = !isPowerOn;
+            const btn = document.getElementById('btn-pwr');
+            client.publish('climax/comando', isPowerOn ? 'LIGAR' : 'DESLIGAR');
+            btn.innerText = isPowerOn ? "DESLIGAR VENTILAÇÃO" : "LIGAR SISTEMA";
+            if (isPowerOn) btn.classList.add('active'); else btn.classList.remove('active');
+
+            // Efeito de feedback visual imediato
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+
+        function openFullscreen() {
+            document.getElementById('card-graph').classList.add('fullscreen-mode');
+            chart.resize();
+        }
+        function closeFullscreen() {
+            document.getElementById('card-graph').classList.remove('fullscreen-mode');
+            chart.resize();
+        }
+    </script>
+</body>
+
+</html>

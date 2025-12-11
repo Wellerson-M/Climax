@@ -21,6 +21,18 @@ Thumbs.db
 dist/
 build/
 
+# Documents
+*.docx
+*.doc
+*.txt
+~$*
+Template-*
+
+# Data
+banco_de_dados.json
+dist/
+build/
+
 # Environment
 .env
 .env.local

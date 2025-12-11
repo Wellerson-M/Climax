@@ -1,21 +1,19 @@
-# 🌡️ Climax - Sistema IoT de Monitoramento de Temperatura e Umidade
+# Climax - Sistema IoT de Monitoramento de Temperatura e Umidade
 
 Projeto completo de monitoramento em tempo real de temperatura e umidade usando ESP32, MQTT, Node.js e uma interface web moderna hospedada no Netlify.
 
-![Image](https://github.com/user-attachments/assets/568c7630-44eb-4158-be74-743e44bb8373)
-
-## 🎯 Características
+## Características
 
 - **Monitoramento em Tempo Real**: Coleta dados a cada 30 segundos via sensor DHT22
 - **Análise com IA**: Detecção de anomalias e previsão de tendências usando regressão linear
 - **Dashboard Interativo**: Interface web responsiva com gráficos em tempo real
 - **MQTT Protocol**: Comunicação assíncrona via broker MQTT (test.mosquitto.org)
-- **Alertas Visuais**: Sistema de alerta customizável com limite de temperatura
+- **Alertas Visuais**: ⚠️ Sistema de alerta customizável com limite de temperatura
 - **Histórico de 24h**: Armazenamento em JSON com limpeza automática
 - **Exportação de Dados**: Download de histórico em formato CSV
 - **Modo Fullscreen**: Visualização em tela cheia otimizada
 
-## 🏗️ Arquitetura de 5 Camadas
+## Arquitetura de 5 Camadas
 
 ```
 ┌─────────────────────────────────────────┐
@@ -31,7 +29,7 @@ Projeto completo de monitoramento em tempo real de temperatura e umidade usando 
 └─────────────────────────────────────────┘
 ```
 
-## 🔧 Componentes
+## Componentes
 
 ### Hardware
 - **ESP32**: Microcontrolador com WiFi e Bluetooth
@@ -50,11 +48,9 @@ Projeto completo de monitoramento em tempo real de temperatura e umidade usando 
 - **Hosting**: [Netlify Dashboard](https://climaxtemp.netlify.app/)
 - **Controle de Versão**: GitHub
 
-## 📊 Dashboard
+## Dashboard
 
-<img width="846" height="866" alt="Dashboard Climax" src="https://github.com/user-attachments/assets/7d615a09-7c72-493c-aa32-34b2fedca343" />
-
-### Funcionalidades do Dashboard
+### Funcionalidades
 
 - **Exibição em Tempo Real**: Temperatura e Umidade com atualizações a cada 30s
 - **Recordes**: Máximas e mínimas do período
@@ -69,16 +65,18 @@ Projeto completo de monitoramento em tempo real de temperatura e umidade usando 
 - **Exportar CSV**: Download do histórico completo
 - **Tela Cheia**: Modo fullscreen otimizado para apresentações
 
-## 🚀 Como Funciona
+<img width="846" height="866" alt="Dashboard Climax" src="https://github.com/user-attachments/assets/7d615a09-7c72-493c-aa32-34b2fedca343" />
 
-### 1. **Coleta de Dados (ESP32)**
+## Como Funciona
+
+### 1. Coleta de Dados (ESP32)
 ```
 DHT22 Sensor → Leitura → WiFi → MQTT Publish
 Intervalo: 30 segundos
 Tópicos: climax/esp32/temperatura, climax/esp32/umidade
 ```
 
-### 2. **Análise (Node.js)**
+### 2. Análise (Node.js)
 ```
 MQTT Subscribe → Validação → Análise
 ├─ Cálculo de média móvel
@@ -87,7 +85,7 @@ MQTT Subscribe → Validação → Análise
 Salvamento automático a cada 30s
 ```
 
-### 3. **Apresentação (Web)**
+### 3. Apresentação (Web)
 ```
 MQTT WebSocket → Chart.js → Dashboard
 ├─ Gráficos em tempo real
@@ -96,7 +94,7 @@ MQTT WebSocket → Chart.js → Dashboard
 └─ Histórico com zoom/pan
 ```
 
-## 📋 Tópicos MQTT
+## Tópicos MQTT
 
 ### Subscribe (Recebe)
 - `climax/esp32/temperatura` - Leitura de temperatura
@@ -109,7 +107,7 @@ MQTT WebSocket → Chart.js → Dashboard
 - `climax/web/pontografico` - Novo ponto para o gráfico
 - `climax/node/status` - Status de heartbeat
 
-## ⚙️ Configuração
+## Configuração
 
 ### ESP32
 ```cpp
@@ -139,7 +137,7 @@ const broker = 'wss://test.mosquitto.org:8081';
 const tempLimite = 30.0; // Padrão (customizável via slider)
 ```
 
-## 📦 Instalação
+## Instalação
 
 ### 1. Clonar Repositório
 ```bash
@@ -163,7 +161,7 @@ node ia.js
 - **Local**: Abrir `index.html` em um navegador
 - **Online**: https://climaxtemp.netlify.app/
 
-## 📊 Análise de Dados
+## Análise de Dados
 
 ### Detecção de Anomalias
 - Compara leitura atual com média móvel de 5 pontos
@@ -184,21 +182,21 @@ y = a*x + b (regressão linear)
 - Limpeza automática de dados antigos
 - Armazenamento: `banco_de_dados.json`
 
-## 🔒 Segurança
+## Segurança
 
 - MQTT via WebSocket Secure (wss://)
 - Validação de dados de entrada
 - Heartbeat monitoring (15 segundos timeout)
 - Isolamento de componentes
 
-## 📈 Performance
+## Performance
 
 - **Latência**: < 1 segundo (MQTT)
 - **Overhead**: ~50KB/dia de dados
 - **Processamento**: < 50ms por ciclo
 - **Uptime**: 24/7 com auto-restart
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### ESP32 não conecta
 - Verificar SSID e password do WiFi
@@ -214,17 +212,21 @@ y = a*x + b (regressão linear)
 - Mudar porta em `ia.js` ou `index.html`
 - Usar porta > 3000 para evitar conflitos
 
-## 📝 Licença
+## Projeto Físico
+
+![Image](https://github.com/user-attachments/assets/568c7630-44eb-4158-be74-743e44bb8373)
+
+## Licença
 
 Este projeto está disponível sob a licença MIT.
 
-## 👥 Autor
+## Autor
 
-**Wellerson Martins**
+**Wellerson Meredyk**
 - GitHub: [@Wellerson-M](https://github.com/Wellerson-M)
 - Projeto: Climax IoT Monitoring System
 
-## 🔗 Links Úteis
+## Links Úteis
 
 - [Dashboard Online](https://climaxtemp.netlify.app/)
 - [MQTT Broker](http://test.mosquitto.org/)
@@ -234,4 +236,4 @@ Este projeto está disponível sob a licença MIT.
 
 ---
 
-**Última Atualização**: 10/12/2025 | v1.2
+Última Atualização: 10/12/2025 | v1.2

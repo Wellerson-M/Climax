@@ -111,8 +111,8 @@
 
  ### ESP32
  ```cpp
- // WiFi
- const char* ssid = "Redmi9";
+ // WiFi (em secrets.h, fora do repositório)
+ const char* ssid = WIFI_SSID;
 
  // MQTT
  const char* mqtt_server = "test.mosquitto.org";
@@ -148,7 +148,7 @@
  ### 2. Configurar ESP32
  - Abrir `Climax.ard.ino` no Arduino IDE
  - Instalar bibliotecas: `PubSubClient`, `DHT sensor library`, `Adafruit Unified Sensor`
- - Configurar WiFi SSID/Password
+ - Copiar `secrets.example.h` para `secrets.h` e preencher o nome e a senha da rede
  - Upload para ESP32
 
  ### 3. Executar Node.js

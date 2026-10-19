@@ -3,8 +3,10 @@
 #include <DHT.h>
 
 // --- DADOS DE WIFI ---
-const char* ssid = "Redmi9";
-const char* password = "12345678";
+// Copie secrets.example.h para secrets.h e preencha com a sua rede
+#include "secrets.h"
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 // --- CONFIGURAÇÕES MQTT ---
 const char* mqtt_server = "test.mosquitto.org";

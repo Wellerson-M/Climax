@@ -36,3 +36,6 @@ build/
 # Environment
 .env
 .env.local
+
+# Credenciais do Wi-Fi do ESP32
+Climax.ard/secrets.h
